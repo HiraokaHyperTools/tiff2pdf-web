@@ -9,7 +9,7 @@ add_executable(cmain cmain.cpp)
 if(EMSCRIPTEN)
   set_target_properties(cmain
     PROPERTIES LINK_FLAGS "\
-      -s \"EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\", \"FS\"]\" \
+      -s \"EXTRA_EXPORTED_RUNTIME_METHODS=[\"ccall\", \"cwrap\", \"FS\", \"callMain\"]\" \
       -s TOTAL_MEMORY=16MB \
       -s MODULARIZE=1 \
       -s EXPORT_NAME=\"create_cmain\" \

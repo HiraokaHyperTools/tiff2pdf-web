@@ -15,6 +15,7 @@ if(EMSCRIPTEN)
       -s EXPORT_NAME=\"create_cmain\" \
       -s WASM=1 \
       -s SINGLE_FILE=1 \
+      -s FORCE_FILESYSTEM=1 \
       "
   )
 

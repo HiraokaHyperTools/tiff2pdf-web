@@ -176,9 +176,6 @@ document.getElementById("viewer").data = url
             let stdout = "";
             let stderr = "";
             try {
-                const inputTag = this;
-                const tiffBlob = new Blob([inputTag.files[0]]);
-
                 // Assume 0, quit isn't called on successful exit from main().
                 let quitOnStatus = 0;
 
@@ -196,6 +193,9 @@ document.getElementById("viewer").data = url
                 converterStatus.text("input タグの files[0] から arrayBuffer 取得中");
 
                 const dlStart = new Date().getTime();
+
+                const inputTag = this;
+                const tiffBlob = new Blob([inputTag.files[0]]);
 
                 const tiffBuffer = await tiffBlob.arrayBuffer();
 
@@ -238,7 +238,7 @@ document.getElementById("viewer").data = url
                 }
 
                 converterStatus.text("完了。"
-                    + "WebAssembly 関係の実行時間 " + ((wasmEnd - wasmStart) / 1000) + " 秒程"
+                    + "WebAssembly 関係の実行時間 " + (((wasmEnd - wasmStart) - (dlEnd - dlStart)) / 1000) + " 秒程"
                     + " + "
                     + "JavaScript へのファイル転送時間 " + ((dlEnd - dlStart) / 1000) + " 秒程。"
                 );

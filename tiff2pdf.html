@@ -85,41 +85,6 @@
     </header>
 
     <div class="container">
-        <h1>cmain.js</h1>
-        <p>cmain.js は emsdk でビルドされた簡単な WebAssembly です。
-            ビルドシステムの都合で、単一の <code>.js</code> へ結合した状態で欲しかったため
-            (本来は <code>.js</code> と <code>.wasm</code> に別れるところ)
-            <code>-s SINGLE_FILE=1</code> を指定してビルドしています。
-        </p>
-        <p>使用方法は、<b>開発者ツール</b>の<b>コンソール</b>機能を開いて実験してください。
-            通常は <kbd>F12</kbd> を押下することで開きます。</p>
-
-        <div class="card mb-3">
-            <div class="card-header">インスタンス作成例</div>
-            <div class="card-body">
-                <p class="card-text">
-                <p>例:</p>
-                <pre><code>cmain = await create_cmain()</code></pre>
-                <p><var>cmain</var> が起動した <var>Module</var> になります。この方法ですと <var>main</var> を実行してしまいます。</p>
-                <img src="img/ex1.png">
-                </p>
-            </div>
-        </div>
-
-        <div class="card mb-3">
-            <div class="card-header">main を起動しない</div>
-            <div class="card-body">
-                <p class="card-text">
-                <p>例:</p>
-                <pre><code>cmain = await create_cmain({noInitialRun: true})</code></pre>
-                <p><var>cmain</var> が起動した <var>Module</var> になります。この方法ですと <var>main</var> は実行されません。</p>
-                <p>改めて <var>callMain</var> を使用し <var>main</var> を実行しましょう。</p>
-                <pre><code>cmain.callMain(["入力ファイル名","-o","出力ファイル名"])</code></pre>
-                <img src="img/ex2.png">
-                </p>
-            </div>
-        </div>
-
         <h1>tiff2pdf.js</h1>
         <p>tiff2pdf.js と tiff2pdf.wasm は emsdk でビルドされた tiff2pdf の WebAssembly 版です。</p>
 
@@ -133,7 +98,7 @@
                 </blockquote>
                 <p>ここに PDF を表示します</p>
                 <div>
-                    <object id="pdfOutput" width="100%" height="480" style="background-color: gray;"></object>
+                    <object id="pdfOutput" width="100%" height="640" style="background-color: gray;"></object>
                 </div>
                 </p>
             </div>
@@ -182,31 +147,49 @@ document.getElementById("viewer").data = fileReader.result
         integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
         crossorigin="anonymous"></script>
     <script src="./js/bootstrap.min.js"></script>
-    <script src="./js/cmain.js"></script>
     <script src="./js/tiff2pdf.js"></script>
 
     <script type="text/javascript">
         $("#tiffInput").on("change", async function () {
-            const inputTag = this;
-            const tiffBlob = new Blob([inputTag.files[0]]);
+            let stdout = "";
+            let stderr = "";
+            try {
+                const inputTag = this;
+                const tiffBlob = new Blob([inputTag.files[0]]);
 
-            const tiff2pdf = await create_tiff2pdf({ noInitialRun: true });
+                // Assume 0, quit isn't called on successful exit from main().
+                let quitOnStatus = 0;
 
-            tiff2pdf.FS.writeFile("/tmp/input.tif", new Uint8Array(await tiffBlob.arrayBuffer()));
+                const tiff2pdf = await create_tiff2pdf({
+                    noInitialRun: true,
+                    print: function (text) { stdout += text; },
+                    printErr: function (text) { stderr += text; },
+                    quit: function (status, ex) { quitOnStatus = status; },
+                });
 
-            tiff2pdf.callMain(["-o", "/tmp/output.pdf", "/tmp/input.tif"]);
+                tiff2pdf.FS.writeFile("/tmp/input.tif", new Uint8Array(await tiffBlob.arrayBuffer()));
 
-            const pdfByteArray = tiff2pdf.FS.readFile("/tmp/output.pdf");
+                tiff2pdf.callMain(["-o", "/tmp/output.pdf", "/tmp/input.tif"]);
 
-            const pdfBlob = new Blob([pdfByteArray], { type: "application/pdf" });
+                if (quitOnStatus != 0) {
+                    throw new Error("quit on status " + quitOnStatus + ".");
+                }
 
-            const fileReader = new FileReader();
+                const pdfByteArray = tiff2pdf.FS.readFile("/tmp/output.pdf");
 
-            fileReader.readAsDataURL(pdfBlob);
+                const pdfBlob = new Blob([pdfByteArray], { type: "application/pdf" });
 
-            $(fileReader).on("load", function () {
-                $("#pdfOutput").prop("data", fileReader.result);
-            })
+                const fileReader = new FileReader();
+
+                fileReader.readAsDataURL(pdfBlob);
+
+                $(fileReader).on("load", function () {
+                    $("#pdfOutput").prop("data", fileReader.result);
+                })
+            }
+            catch (ex) {
+                alert("--- JavaScript エラーメッセージ\n" + ex + "\n--- 標準出力\n" + stdout + "\n--- 標準エラー出力\n" + stderr);
+            }
         });
     </script>
 

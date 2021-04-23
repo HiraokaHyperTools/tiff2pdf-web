@@ -176,6 +176,8 @@ document.getElementById("viewer").data = url
     <script type="text/javascript">
         const converterStatus = $("#converterStatus");
 
+        const serial = "2021_04_23"; // update this serial after placing newer `.wasm` file. 
+
         $("#tiffInput").on("change", async function () {
             converterStatus.text("変換開始");
             let stdout = "";
@@ -193,6 +195,9 @@ document.getElementById("viewer").data = url
                     print: function (text) { stdout += text; },
                     printErr: function (text) { stderr += text; },
                     quit: function (status, ex) { quitOnStatus = status; },
+                    locateFile: function (path, scriptDirectory) {
+                        return scriptDirectory + path + "?_=" + serial;
+                    }
                 });
 
                 converterStatus.text("input タグの files[0] から arrayBuffer 取得中");

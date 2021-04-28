@@ -97,6 +97,36 @@
                     <p><input id="tiffInput" type="file" /></p>
                     <p>変換状態 『<i id="converterStatus">...</i>』</p>
                 </div>
+                <div class="form-group">
+                    <label for="fromAsset">あるいは、アセットからダウンロードして、変換したい</label>
+                    <select class="form-control" id="fromAsset" x-generator="Console46">
+                        <option>TIFF6.tif</option>
+                        <option>imgs/1bpp-None.tif</option>
+                        <option>imgs/1bpp-Fax.tif</option>
+                        <option>imgs/1bpp-Group4.tif</option>
+                        <option>imgs/1bpp-LZW.tif</option>
+                        <option>imgs/1bpp-RunlengthEncoded.tif</option>
+                        <option>imgs/4bpp-None.tif</option>
+                        <option>imgs/4bpp-LZW.tif</option>
+                        <option>imgs/4bpp-Zip.tif</option>
+                        <option>imgs/8bpp-None.tif</option>
+                        <option>imgs/8bpp-LZW.tif</option>
+                        <option>imgs/8bpp-Zip.tif</option>
+                        <option>imgs/24bpp-None.tif</option>
+                        <option>imgs/24bpp-JPEG.tif</option>
+                        <option>imgs/24bpp-LZW.tif</option>
+                        <option>imgs/24bpp-Zip.tif</option>
+                        <option>imgs/32bpp-None.tif</option>
+                        <option>imgs/32bpp-LZW.tif</option>
+                        <option>imgs/32bpp-Zip.tif</option>
+                    </select>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-primary" id="convertIt">変換</button>
+                    |
+                    <button type="button" class="btn btn-primary" id="downloadIt">ダウンロード</button>
+                </div>
+                <p>.</p>
                 <p>※ サンプルの <a href="TIFF6.tif" download="TIFF6.tif">TIFF6.tif</a> (121 pages, 4.06 MB, 300 dpi, Group 4
                     compression) をダウンロード。
                     <a href="https://www.adobe.io/open/standards/TIFF.html" target="_blank">TIFF</a> に掲載の TIFF6.pdf
@@ -178,7 +208,7 @@ document.getElementById("viewer").data = url
 
         const serial = "2021_04_23"; // update this serial after placing newer `.wasm` file. 
 
-        $("#tiffInput").on("change", async function () {
+        async function convertFrom(blobAsyncFactory) {
             converterStatus.text("変換開始");
             let stdout = "";
             let stderr = "";
@@ -204,8 +234,7 @@ document.getElementById("viewer").data = url
 
                 const dlStart = new Date().getTime();
 
-                const inputTag = this;
-                const tiffBlob = new Blob([inputTag.files[0]]);
+                const tiffBlob = await blobAsyncFactory();
 
                 const tiffBuffer = await tiffBlob.arrayBuffer();
 
@@ -256,6 +285,29 @@ document.getElementById("viewer").data = url
             catch (ex) {
                 alert("--- JavaScript エラーメッセージ\n" + ex + "\n--- 標準出力\n" + stdout + "\n--- 標準エラー出力\n" + stderr);
             }
+        }
+
+        $("#tiffInput").on("change", async function () {
+            const inputTag = this;
+
+            if (inputTag.files.length === 0) {
+                return;
+            }
+
+            convertFrom(async () => new Blob([inputTag.files[0]]));
+        });
+
+        const fromAsset = $("#fromAsset");
+        const getAsset = () => fromAsset.children("option:selected").text();
+        $("#downloadIt").on("click", function () {
+            window.open(getAsset());
+        });
+        $("#convertIt").on("click", async function () {
+            convertFrom(async () => {
+                const resp = await fetch(getAsset());
+                const blob = await resp.blob();
+                return blob;
+            });
         });
     </script>
 

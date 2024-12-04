@@ -246,7 +246,7 @@ document.getElementById("viewer").data = url
 
                 converterStatus.text("tiff2pdf 実行中");
 
-                tiff2pdf.callMain(["-o", "/tmp/output.pdf", "/tmp/input.tif"]);
+                tiff2pdf.callMain(["-o", "/tmp/output.pdf", "-z", "-m", "0", "/tmp/input.tif"]);
 
                 converterStatus.text("tiff2pdf 完了。終了コード " + quitOnStatus);
 
